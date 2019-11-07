@@ -61,17 +61,16 @@ public class GameOfLife {
 
     public String GetBoardAsHTML(){
         String result = "";
-        result = "<table border=1>";
+        result = "";
+        result += "<table border=1 spacing=\"0\" padding=\"0\" style=\"border: 1px solid black; border-collapse: collapse;\">";
         for (int r = 1; r <= _size; r++) {
             result += "<tr>";
             for (int c = 1; c <= _size; c++) {
-                result += "<td width=16>";
                 if (_board[r][c] == 1){
-                    result += "@";
+                    result += "<td style=\"background-color:green;\"width=16>&nbsp;</td>";
                 } else {
-                    result += "&nbsp;";
+                    result += "<td width=16>&nbsp;</td>";
                 }
-                result += "</td>";
             }
             result += "</tr>";
         }
