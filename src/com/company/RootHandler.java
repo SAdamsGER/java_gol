@@ -12,8 +12,10 @@ import java.util.Map;
 public class RootHandler implements HttpHandler {
 
     private GameOfLife gol;
+    private GameOfLife gol2;
     private Map<String, String> params;
     private boolean AutoStep;
+    private boolean _useGol2;
 
     @Override
     public void handle(HttpExchange he) throws IOException {
@@ -39,14 +41,17 @@ public class RootHandler implements HttpHandler {
                 break;
             case "restart":
                 gol.Restart();
+                gol2.SetBoardString(gol.GetBoardString());
                 break;
             case "clear":
                 gol.Clear();
+                gol2.Clear();
                 break;
             case "set":
                 int row = getQueryInt("r");
                 int column = getQueryInt("c");
                 gol.SetPoint(Integer.parseInt(params.get("r")),Integer.parseInt(params.get("c")));
+                gol2.SetPoint(Integer.parseInt(params.get("r")),Integer.parseInt(params.get("c")));
                 break;
             case "getboard":
                 boardOutput = gol.GetBoardString();
@@ -54,19 +59,20 @@ public class RootHandler implements HttpHandler {
                 break;
             case "setboard":
                 String boardString = getQueryString("board");
-                if (boardString.length() > 0) gol.SetBoardString(boardString);
+                if (boardString.length() > 0){
+                    gol.SetBoardString(boardString);
+                    gol2.SetBoardString(boardString);
+                }
                 break;
             default:
                 gol.Grow();
+                gol2.Grow();
                 break;
         }
 
         String response =
             "<html>"+
             "<head>";
-        if(AutoStep) {
-//            response += "<meta http-equiv=\"refresh\" content=\"1 url=/\" />";
-        }
         response += "<link rel=\"stylesheet\" type=\"text/css\" href=\"/src/my.css\">";
         response += "</head><body><center>"+
             "<h4>Small Game of Life Example in Java</h4>"+
@@ -81,6 +87,9 @@ public class RootHandler implements HttpHandler {
 
 
         response += gol.GetBoardAsHTML();
+        if (_useGol2) {
+            response += gol2.GetBoardAsHTML();
+        }
         response += "</center>";
         response += "<div style=\"width: 90%;margin: auto;word-wrap: break-word;\">"+boardOutput+"</div>";
         response += "<div style=\"width: 90%;margin: auto;word-wrap: break-word;\">"+boardOutputHex+"</div>";
@@ -167,6 +176,17 @@ public class RootHandler implements HttpHandler {
     }
 
     public RootHandler(){
-        gol = new GameOfLife(40, 300);
+        _useGol2 = false;
+
+        gol2 = new GameOfLife(10, 50);
+        gol2.SetRules("23", "3");
+
+        if (_useGol2) {
+            gol = new GameOfLife(10, 50);
+            gol2.SetBoardString(gol.GetBoardString());
+        } else {
+            gol = new GameOfLife(40, 40 * 40 / 2);
+        }
+        gol.SetRules("23", "3");
     }
 }

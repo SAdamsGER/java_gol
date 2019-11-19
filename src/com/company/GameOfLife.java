@@ -9,8 +9,12 @@ public class GameOfLife {
     private int _size;
     private int _step;
     private int _startingPopulation;
+    private String _ruleBorn;
+    private String _ruleSurvive;
 
     public GameOfLife(int startingSize, int startingPopulation){
+        _ruleBorn = "3";
+        _ruleSurvive = "23";
         if(startingPopulation > (startingSize*startingSize*0.9)){
             double sPop = (startingSize * startingSize * 0.9);
             startingPopulation = (int) sPop;
@@ -32,25 +36,72 @@ public class GameOfLife {
             ClearBoard(_calcBoard);
             for (int r = 1; r <= _size; r++) {
                 for (int c = 1; c <= _size; c++) {
-                    int surroundingPopulation = _board[r-1][c-1]+_board[r-1][c]+_board[r-1][c+1]
-                            +_board[r][c-1]+0+_board[r][c+1]
-                            +_board[r+1][c-1]+_board[r+1][c]+_board[r+1][c+1];
-                    switch (surroundingPopulation){
-                        case 2:
-                            _calcBoard[r][c] = _board[r][c];
-                            break;
-                        case 3:
-                            _calcBoard[r][c] = 1;
-                            break;
-                        default:
-                            _calcBoard[r][c] = 0;
-                            break;
-                    }
+                    int surroundingPopulation = 0;
+//                    surroundingPopulation = GetSurroundingPopulationNormal(r,c);
+                    surroundingPopulation = GetSurroundingPopulationCalc(r,c);
+//                    surroundingPopulation = GetSurroundingPopulationCalcFast(r,c);
 
+                    CalculateCellWithRules(r, c, surroundingPopulation);
+//                    CalculateCellDefault(r, c, surroundingPopulation);
                 }
             }
             CopyBoard(_calcBoard,_board);
         }
+    }
+
+    private void CalculateCellDefault(int r, int c, int surroundingPopulation) {
+        // default logic
+        switch (surroundingPopulation){
+            case 2:
+                _calcBoard[r][c] = _board[r][c];
+                break;
+            case 3:
+                _calcBoard[r][c] = 1;
+                break;
+            default:
+                _calcBoard[r][c] = 0;
+                break;
+        }
+    }
+
+    private void CalculateCellWithRules(int r, int c, int surroundingPopulation) {
+        // default it dies
+        _calcBoard[r][c] = 0;
+        // if suvive rule fits get old value
+        if (_ruleSurvive.contains(Integer.toString(surroundingPopulation))) _calcBoard[r][c] = _board[r][c];
+        // if born rule fits set to 1
+        if (_ruleBorn.contains(Integer.toString(surroundingPopulation))) _calcBoard[r][c] = 1;
+    }
+
+    private int GetSurroundingPopulationNormal(int r, int c) {
+        return _board[r-1][c-1]+_board[r-1][c]+_board[r-1][c+1]
+              +_board[r][c-1]+  0             +_board[r][c+1]
+              +_board[r+1][c-1]+_board[r+1][c]+_board[r+1][c+1];
+    }
+
+    private int GetSurroundingPopulationCalc(int r, int c){
+        int result = 0;
+        for (int i = r-1; i <= r+1; i++) {
+            for (int j = c-1; j <= c+1; j++) {
+                if (!((i==r) && (j==c))){ // aktuelle Zelle is nicht zu addieren
+                    if (((i>0) && (i<_size+1)) && ((j>0) && (j<_size+1))) { // check boundaries if necessary
+                        result += _board[i][j];
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private int GetSurroundingPopulationCalcFast(int r, int c){
+        int result = 0;
+        for (int i = r-1; i <= r+1; i++) {
+            for (int j = c-1; j <= c+1; j++) {
+                result = result + _board[i][j];
+            }
+        }
+        result -= _board[r][c];
+        return result;
     }
 
     private void CopyBoard(byte[][] fromBoard, byte[][] toBoard) {
@@ -155,6 +206,11 @@ public class GameOfLife {
                 board[r][c] = 0;
             }
         }
+    }
+
+    public void SetRules(String ruleSurvive, String ruleBorn){
+        _ruleSurvive = ruleSurvive;
+        _ruleBorn = ruleBorn;
     }
 
     public void Restart(){
